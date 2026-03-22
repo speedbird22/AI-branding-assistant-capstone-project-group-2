@@ -145,7 +145,7 @@ def create_brand_book(company, desc):
     buffer.seek(0)
     return buffer
 
-def render(company, desc):
+def render(company, industry, tone, desc):
     st.markdown("### \U0001f4d5 Brand Book Generator")
     st.caption("Compile all your generated brand assets into a professional PDF.")
 
