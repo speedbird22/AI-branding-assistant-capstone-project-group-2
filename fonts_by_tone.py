@@ -1,10 +1,4 @@
-# fonts_by_tone.py
-# All fonts sourced exclusively from the approved font library.
-# Categorized by the 5 brand tones available in the app.
-# The AI will pick 3 fonts from the matching tone category.
 
-# Tone -> Font List mapping
-# Tones: Minimalist | Professional | Luxury | Bold | Playful
 
 FONTS_BY_TONE = {
     "Minimalist": [
