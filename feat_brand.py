@@ -1,12 +1,61 @@
 import streamlit as st
+import pandas as pd
+import os
+import random
 from utils import generate_ai, extract_json, glass_card, font_card
+from fonts_by_tone import get_fonts_str_for_tone
+
+def load_slogan_examples(tone, n=6):
+    """
+    Loads example slogans from slogans.csv.
+    Returns a formatted string of example slogans for the AI prompt.
+    """
+    try:
+        csv_path = os.path.join(os.path.dirname(__file__), "slogans.csv")
+        df = pd.read_csv(csv_path)
+        # Try to filter by tone if a tone column exists
+        tone_col = None
+        for col in df.columns:
+            if col.lower() in ["tone", "style", "brand_tone"]:
+                tone_col = col
+                break
+        if tone_col:
+            filtered = df[df[tone_col].str.lower() == tone.lower()]
+            if len(filtered) >= n:
+                sample = filtered.sample(n)
+            else:
+                sample = df.sample(min(n, len(df)))
+        else:
+            sample = df.sample(min(n, len(df)))
+        # Try to find the slogan column
+        slogan_col = None
+        for col in df.columns:
+            if col.lower() in ["slogan", "tagline", "slogans", "taglines", "text"]:
+                slogan_col = col
+                break
+        if slogan_col is None:
+            slogan_col = df.columns[0]
+        examples = sample[slogan_col].dropna().tolist()
+        return ", ".join([f'"{s}"' for s in examples])
+    except Exception:
+        return ""
 
 def render(company, industry, tone, desc):
     if st.button("Generate Brand Identity"):
-        prompt=f"""
+        # Get approved fonts for this tone
+        fonts_list = get_fonts_str_for_tone(tone)
+        # Get slogan examples from CSV
+        slogan_examples = load_slogan_examples(tone)
+        slogan_hint = ""
+        if slogan_examples:
+            slogan_hint = f"\nFor slogan inspiration, study these real brand slogans (DO NOT copy, create unique ones): {slogan_examples}."
+        prompt = f"""
         Return ONLY JSON.
         {{"slogans":["","","","",""], "fonts":["","",""], "palette":["#HEX","#HEX","#HEX","#HEX"]}}
         Company:{company}\nIndustry:{industry}\nTone:{tone}\nDescription:{desc}
+        {slogan_hint}
+        For fonts, you MUST choose exactly 3 fonts from this approved list only: {fonts_list}.
+        Create 5 unique, memorable slogans that match the brand tone and industry.
         """
         data = extract_json(generate_ai(prompt))
         if data:
@@ -49,6 +98,11 @@ def render(company, industry, tone, desc):
 
         if apply_brand_btn and brand_suggestion:
             current_brand = st.session_state.brand
+            fonts_list = get_fonts_str_for_tone(tone)
+            slogan_examples = load_slogan_examples(tone)
+            slogan_hint = ""
+            if slogan_examples:
+                slogan_hint = f"\nFor slogan inspiration, study these real brand slogans (DO NOT copy, create unique ones): {slogan_examples}."
             refine_prompt = f"""
             You are refining an existing brand identity.
 
@@ -63,6 +117,8 @@ def render(company, industry, tone, desc):
             Description: {desc}
 
             USER SUGGESTIONS: "{brand_suggestion}"
+            {slogan_hint}
+            For fonts, you MUST choose exactly 3 fonts from this approved list only: {fonts_list}.
 
             Task: Apply the user's suggestions and return an updated brand identity.
             Return ONLY JSON with this exact structure:
