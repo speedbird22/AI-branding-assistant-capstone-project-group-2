@@ -30,7 +30,7 @@ html, body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
 
 st.title("\U0001f680 AI Brand Architect")
 
-# --- STATE MANAGEMENT ---
+# ---- STATE MANAGEMENT ----
 # Function to wipe old data when starting a new company
 def clear_data():
     st.session_state.brand = {}
@@ -41,18 +41,24 @@ def clear_data():
     st.session_state.logo_code = ""
     st.session_state.logo_desc = ""
     st.session_state.book_extra_content = ""
+    st.session_state.final_slogan = ""
+    st.session_state.final_font = ""
+    st.session_state.final_campaign_caption = ""
 
 # Initialize defaults if empty
 defaults = {
     "brand": {}, "campaign": {}, "strategy": "", "translations": "",
     "logo_response": "", "logo_code": "", "logo_desc": "",
-    "book_extra_content": ""
+    "book_extra_content": "",
+    "final_slogan": "",
+    "final_font": "",
+    "final_campaign_caption": "",
 }
 for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
-# --- SIDEBAR ---
+# ---- SIDEBAR ----
 with st.sidebar:
     st.header("Brand Profile")
 
@@ -67,25 +73,30 @@ with st.sidebar:
         clear_data()
         st.rerun()
 
-# --- TABS ---
-tabs = st.tabs([
+# ---- TABS ----
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "\U0001f3a8 Brand Identity",
-    "\U0001f4e2 Campaign",
-    "\U0001f9e0 Strategy",
-    "\U0001f30d Translate",
-    "\U0001fa84 Logo Gen",
-    "\U0001f4d5 Brand Book"
+    "\U0001f4e3 Campaign",
+    "\U0001f4cb Strategy",
+    "\U0001f310 Translate",
+    "\U0001f5bc\ufe0f Logo Gen",
+    "\U0001f4d6 Brand Book"
 ])
 
-with tabs[0]:
+with tab1:
     feat_brand.render(company, industry, tone, desc)
-with tabs[1]:
+
+with tab2:
     feat_campaign.render(company, industry, tone, desc)
-with tabs[2]:
+
+with tab3:
     feat_strategy.render(company, industry, tone, desc)
-with tabs[3]:
-    feat_translate.render()
-with tabs[4]:
+
+with tab4:
+    feat_translate.render(company, industry, tone, desc)
+
+with tab5:
     feat_logo.render(company, industry, tone, desc)
-with tabs[5]:
-    feat_book.render(company, desc)
+
+with tab6:
+    feat_book.render(company, industry, tone, desc)
