@@ -12,8 +12,6 @@ from utils import generate_ai
 def clean_markdown(text):
     """Sanitizes text, converts smart punctuation, and handles markdown."""
     if not text: return ""
-
-    # 1. Convert "smart" typography to standard ASCII to prevent black boxes
     replacements = {
         '\u201c': '"', '\u201d': '"', '\u2018': "'", '\u2019': "'",
         '\u2014': '-', '\u2013': '-', '\u2026': '...', '\u2022': '-',
@@ -21,25 +19,14 @@ def clean_markdown(text):
     }
     for search, replace in replacements.items():
         text = text.replace(search, replace)
-
-    # 2. Strip any remaining unsupported unicode/emojis
     text = text.encode('ascii', 'ignore').decode('ascii')
-
-    # 3. Strip out raw HTML tags and backticks
     text = re.sub(r'<[^>]+>', '', text)
     text = text.replace('```', '')
-
-    # 4. Escape special XML characters
     text = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-
-    # 5. Convert Markdown **bold** and *italics* to ReportLab safe tags
     text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
     text = re.sub(r'\*(.*?)\*', r'<i>\1</i>', text)
     text = re.sub(r'_(.*?)_', r'<i>\1</i>', text)
-
-    # 6. Clean up Markdown headers (###)
     text = re.sub(r'^#+\s+', '', text, flags=re.MULTILINE)
-
     return text
 
 def create_brand_book(company, desc):
@@ -49,13 +36,10 @@ def create_brand_book(company, desc):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
-
     title_style = styles["Heading1"]
     title_style.alignment = TA_CENTER
-
     body = ParagraphStyle('body', fontSize=11, leading=16)
     bullet_style = ParagraphStyle('bullet', fontSize=11, leading=16, leftIndent=20)
-
     story = []
 
     def add_block(text):
@@ -64,20 +48,15 @@ def create_brand_book(company, desc):
         cleaned_text = clean_markdown(text)
         for line in cleaned_text.split("\n"):
             line = line.strip()
-            # Skip empty lines, markdown dividers (---), and markdown table separators (|---|)
             if not line or line.startswith("---") or re.match(r'^\|?[\s\-:]+\|$', line):
                 continue
-            # Convert markdown table rows into standard text strings
             if line.startswith("|") and line.endswith("|"):
                 line = line.replace("|", " ").strip()
                 line = re.sub(r'\s+', ' ', line)
-            # Catch standard bullet points
             if line.startswith("- ") or line.startswith("* "):
                 story.append(Paragraph(f"\u2022 {line[2:]}", bullet_style))
-            # Catch numbered lists (e.g., "1. ")
             elif re.match(r'^\d+\.\s', line):
                 story.append(Paragraph(line, bullet_style))
-            # Standard paragraph
             else:
                 story.append(Paragraph(line, body))
             story.append(Spacer(1, 6))
@@ -110,25 +89,45 @@ def create_brand_book(company, desc):
         add_block(st.session_state.strategy)
         story.append(Spacer(1, 10))
 
+    # --- SLOGANS: use finalised slogan if chosen, else all ---
     story.append(Paragraph("Slogans", styles["Heading2"]))
-    for s in st.session_state.brand.get("slogans", []):
-        add_block(f"- {s}")
+    final_slogan = st.session_state.get("final_slogan", "")
+    if final_slogan:
+        add_block(f"Primary Slogan: {final_slogan}")
+    else:
+        for s in st.session_state.brand.get("slogans", []):
+            add_block(f"- {s}")
     story.append(Spacer(1, 10))
 
+    # --- TYPOGRAPHY: use finalised font if chosen, else all ---
     story.append(Paragraph("Typography", styles["Heading2"]))
-    for f in st.session_state.brand.get("fonts", []):
-        add_block(f"- {f}")
+    final_font = st.session_state.get("final_font", "")
+    if final_font:
+        add_block(f"Primary Font: {final_font}")
+        other_fonts = [f for f in st.session_state.brand.get("fonts", []) if f != final_font]
+        if other_fonts:
+            for f in other_fonts:
+                add_block(f"- {f} (secondary)")
+    else:
+        for f in st.session_state.brand.get("fonts", []):
+            add_block(f"- {f}")
     story.append(Spacer(1, 10))
 
+    # --- COLOR PALETTE ---
     story.append(Paragraph("Color Palette", styles["Heading2"]))
     for c in st.session_state.brand.get("palette", []):
         add_block(f"- {c}")
     story.append(Spacer(1, 10))
 
+    # --- CAMPAIGN: use finalised caption if chosen, else all ---
     if st.session_state.campaign:
         story.append(Paragraph("Campaign Strategy", styles["Heading2"]))
-        for cap in st.session_state.campaign.get("captions", []):
-            add_block(f"- {cap}")
+        final_caption = st.session_state.get("final_campaign_caption", "")
+        if final_caption:
+            add_block(f"Primary Campaign Idea: {final_caption}")
+        else:
+            for cap in st.session_state.campaign.get("captions", []):
+                add_block(f"- {cap}")
         add_block(st.session_state.campaign.get("metrics", ""))
         story.append(Spacer(1, 10))
 
@@ -153,6 +152,29 @@ def render(company, desc):
     if not st.session_state.get("brand"):
         st.info("\U0001f4a1 **Tip:** Go to the '\U0001f3a8 Brand Identity' tab and generate your brand first to unlock the PDF download!")
         return
+
+    # Show summary of finalised selections
+    final_slogan = st.session_state.get("final_slogan", "")
+    final_font = st.session_state.get("final_font", "")
+    final_caption = st.session_state.get("final_campaign_caption", "")
+
+    if final_slogan or final_font or final_caption:
+        st.markdown("### \U00002705 Your Finalised Selections")
+        if final_slogan:
+            st.success(f"**Slogan:** {final_slogan}")
+        else:
+            st.warning("No slogan finalised yet. All generated slogans will be included.")
+        if final_font:
+            st.success(f"**Font:** {final_font}")
+        else:
+            st.warning("No font finalised yet. All generated fonts will be included.")
+        if final_caption:
+            st.success(f"**Campaign Idea:** {final_caption}")
+        else:
+            st.warning("No campaign idea finalised yet. All campaign ideas will be included.")
+        st.markdown("---")
+    else:
+        st.info("Tip: Go to Brand Identity and Campaign tabs to finalise your slogan, font, and campaign idea before generating the Brand Book.")
 
     # --- ADD SUGGESTIONS ---
     st.markdown("### \U0001f4ac Add Suggestions")
