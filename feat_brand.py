@@ -14,16 +14,14 @@ def load_slogan_examples(n=6):
     try:
         csv_path = os.path.join(os.path.dirname(__file__), CSV_FILENAME)
         df = pd.read_csv(csv_path)
-        # The CSV has columns: Company, Slogan
         slogan_col = "Slogan"
         if slogan_col not in df.columns:
-            # fallback: try to find slogan-like column
             for col in df.columns:
                 if col.lower() in ["slogan", "tagline", "slogans", "taglines"]:
                     slogan_col = col
                     break
             else:
-                slogan_col = df.columns[-1]  # last column as fallback
+                slogan_col = df.columns[-1]
         sample = df.sample(min(n, len(df)))
         examples = sample[slogan_col].dropna().tolist()
         return ", ".join([f'"{s}"' for s in examples])
@@ -32,9 +30,7 @@ def load_slogan_examples(n=6):
 
 def render(company, industry, tone, desc):
     if st.button("Generate Brand Identity"):
-        # Get approved fonts for this tone
         fonts_list = get_fonts_str_for_tone(tone)
-        # Get slogan examples from CSV
         slogan_examples = load_slogan_examples()
         slogan_hint = ""
         if slogan_examples:
@@ -66,9 +62,8 @@ def render(company, industry, tone, desc):
         cols = st.columns(len(brand.get("palette", [])))
         for col, color in zip(cols, brand.get("palette", [])):
             col.markdown(f"""
-<div style="background:{color}; color:white; padding:35px; border-radius:14px; text-align:center;">
-</div>
-<p style="text-align:center; font-size:13px; margin-top:6px; font-family:monospace; color:#ccc;">{color}</p>
+<div style="background:{color}; height:80px; border-radius:14px; margin-bottom:8px;"></div>
+<p style="text-align:center; font-size:13px; font-family:monospace; color:#ccc; margin:0;">{color}</p>
 """, unsafe_allow_html=True)
 
         # --- ADD SUGGESTIONS ---
