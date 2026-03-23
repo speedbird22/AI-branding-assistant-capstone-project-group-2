@@ -123,3 +123,20 @@ This project builds a strong foundation for an intelligent branding system by:
 
 ---
 
+## 📚 References  
+
+1. The Role of Artificial Intelligence in Branding – Forbes  
+   https://www.forbes.com/sites/forbesagencycouncil/2023/03/15/the-role-of-artificial-intelligence-in-branding/  
+
+2. How AI Is Transforming Marketing – Harvard Business Review  
+   https://hbr.org/2021/02/how-ai-is-transforming-marketing  
+
+3. Exploratory Data Analysis – IBM  
+   https://www.ibm.com/topics/exploratory-data-analysis  
+
+4. OpenCV Documentation  
+   https://docs.opencv.org/  
+
+5. Pandas Documentation  
+   https://pandas.pydata.org/docs/  
+
